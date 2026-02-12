@@ -1,0 +1,22 @@
+{
+  "name": "bitboard-chess",
+  "version": "0.1.0",
+  "description": "Lightweight bitboard chess engine for position updates (FEN, Zobrist, SAN). No move validation; assumes validated input.",
+  "type": "module",
+  "main": "index.mjs",
+  "exports": "./index.mjs",
+  "files": ["index.mjs"],
+  "scripts": {
+    "test": "mocha test/**/*.cjs"
+  },
+  "keywords": ["chess", "bitboard", "fen", "zobrist"],
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.0.2",
+    "chess.js": "^0.10.2",
+    "mocha": "^11.1.0"
+  },
+  "engines": {
+    "node": ">= 11.0.0"
+  }
+}
