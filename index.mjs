@@ -667,6 +667,9 @@ class BitboardChess {
 
     return fen;
   }
+
+  /** No-op on JS engine; present for API parity with native (which must free the handle). */
+  destroy() {}
 }
 
 export default BitboardChess;

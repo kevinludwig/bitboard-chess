@@ -4,19 +4,22 @@
   "description": "Lightweight bitboard chess engine for position updates (FEN, Zobrist, SAN). No move validation; assumes validated input.",
   "type": "module",
   "main": "index.mjs",
-  "exports": "./index.mjs",
-  "files": ["index.mjs"],
+  "exports": { ".": "./index.mjs", "./native": "./index-native.cjs" },
+  "files": ["index.mjs", "index-native.cjs", "binding.gyp", "src"],
   "scripts": {
-    "test": "mocha test/**/*.cjs"
+    "test": "mocha test/**/*.cjs",
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean"
   },
   "keywords": ["chess", "bitboard", "fen", "zobrist"],
   "license": "MIT",
   "devDependencies": {
     "chai": "^4.0.2",
     "chess.js": "^0.10.2",
-    "mocha": "^11.1.0"
+    "mocha": "^11.1.0",
+    "node-gyp": "^10.0.0"
   },
   "engines": {
-    "node": ">= 11.0.0"
+    "node": ">= 14.0.0"
   }
 }

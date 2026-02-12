@@ -137,6 +137,15 @@ describe('BitboardChess vs chess.js', function () {
     it('ambiguous Nbd7', function () {
       assertSamePositionSAN(['d4', 'd5', 'Nf3', 'Nf6', 'c4', 'e6', 'Nc3', 'c6', 'e3', 'Nbd7', 'Bd3', 'Bd6', 'O-O', 'O-O'], 'SAN-only Nbd7');
     });
+    it('makeMoveSAN returns true for valid SAN', function () {
+      const b = new BitboardChess();
+      expect(b.makeMoveSAN('e4')).to.equal(true);
+    });
+    it('makeMoveSAN returns false for invalid SAN', function () {
+      const b = new BitboardChess();
+      expect(b.makeMoveSAN('invalid')).to.equal(false);
+      expect(b.makeMoveSAN('e5')).to.equal(false); // black move when white to play
+    });
   });
 
   describe('getZobristKey', function () {
@@ -171,6 +180,98 @@ describe('BitboardChess vs chess.js', function () {
       const fromFen = new BitboardChess();
       fromFen.loadFromFEN(fen);
       expect(fromFen.getZobristKey(), 'same position from FEN').to.equal(keyFromReplay);
+    });
+  });
+
+  describe('resolveSAN', function () {
+    it('returns move object for e4 (pawn push)', function () {
+      const b = new BitboardChess();
+      const move = b.resolveSAN('e4');
+      expect(move).to.be.an('object');
+      expect(move.from).to.equal(12); // e2
+      expect(move.to).to.equal(28);   // e4
+      expect(move).to.not.have.property('castle');
+      expect(move).to.not.have.property('enpassant');
+    });
+    it('returns move object with castle for O-O', function () {
+      const b = new BitboardChess();
+      b.makeMoveSAN('e4');
+      b.makeMoveSAN('e5');
+      b.makeMoveSAN('Nf3');
+      b.makeMoveSAN('Nc6');
+      b.makeMoveSAN('Be2');
+      b.makeMoveSAN('Nf6');
+      const move = b.resolveSAN('O-O');
+      expect(move).to.be.an('object');
+      expect(move.castle).to.equal('K');
+      expect(move.from).to.equal(4);
+      expect(move.to).to.equal(6);
+    });
+    it('returns null for invalid SAN', function () {
+      const b = new BitboardChess();
+      expect(b.resolveSAN('invalid')).to.be.null;
+      expect(b.resolveSAN('e5')).to.be.null; // not legal from start (black e7-e5 would need different board)
+    });
+  });
+
+  describe('makeMove', function () {
+    it('applies raw move and toFEN reflects it', function () {
+      const b = new BitboardChess();
+      b.makeMove({ from: 12, to: 28 }); // e2-e4
+      const fen = b.toFEN();
+      expect(fen).to.include('4P3'); // e4 pawn
+      expect(fen).to.include(' b '); // black to move
+    });
+    it('applies castle move via makeMove', function () {
+      const chess = new Chess();
+      const b = new BitboardChess();
+      ['e4', 'e5', 'Nf3', 'Nc6', 'Be2', 'Nf6'].forEach(san => {
+        chess.move(san);
+        b.makeMoveSAN(san);
+      });
+      b.makeMove({ from: 4, to: 6, castle: 'K' });
+      chess.move('O-O');
+      expect(fenPosition(b.toFEN())).to.equal(fenPosition(chess.fen()));
+    });
+  });
+
+  describe('loadFromFEN', function () {
+    it('sets position and toFEN matches', function () {
+      const fen = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1';
+      const b = new BitboardChess();
+      b.loadFromFEN(fen);
+      expect(fenPosition(b.toFEN())).to.equal(fenPosition(fen));
+    });
+  });
+
+  describe('toFEN', function () {
+    it('initial position has correct first four fields', function () {
+      const b = new BitboardChess();
+      const fen = b.toFEN();
+      expect(fen.startsWith('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')).to.be.true;
+      expect(fen).to.include(' w ');
+      expect(fen).to.match(/ KQkq /);
+    });
+  });
+
+  describe('reset', function () {
+    it('restores initial position', function () {
+      const b = new BitboardChess();
+      const initialKey = b.getZobristKey();
+      b.makeMoveSAN('e4');
+      b.makeMoveSAN('e5');
+      expect(b.getZobristKey()).to.not.equal(initialKey);
+      b.reset();
+      expect(b.getZobristKey()).to.equal(initialKey);
+      const initialFen = fenPosition(new BitboardChess().toFEN());
+      expect(fenPosition(b.toFEN())).to.equal(initialFen);
+    });
+  });
+
+  describe('destroy', function () {
+    it('does not throw', function () {
+      const b = new BitboardChess();
+      expect(() => b.destroy()).to.not.throw();
     });
   });
 });
