@@ -1,6 +1,6 @@
 # bitboard-chess
 
-Lightweight bitboard chess engine for position updates. **No move validation** — assumes validated input (e.g. from replaying PGN games). Supports castling, en passant, promotions, full FEN, and deterministic Zobrist hashing.
+Lightweight [bitboard](https://en.wikipedia.org/wiki/Bitboard) chess library for position updates, producing [FEN](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation), and producing [Zobrist keys](https://en.wikipedia.org/wiki/Zobrist_hashing). **No move validation is done.** This library assumes validated input (e.g. from games coming from reliable sources such as [chess.com](www.chess.com) APIs). Supports castling, en passant, promotions, ambiguous moves (Nbd7, R1a8, etc), full FEN, and deterministic Zobrist hashing. Generally you should prefer a library like [chess.js](https://github.com/jhlywa/chess.js/). However you might find this library useful if you are going to be replaying many games or comparing many positions via an automated script or API endpoint, and raw speed is needed.
 
 ## Two implementations
 
