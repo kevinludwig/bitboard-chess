@@ -1,6 +1,6 @@
 {
   "name": "bitboard-chess",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lightweight bitboard chess engine for position updates (FEN, Zobrist, SAN). No move validation; assumes validated input.",
   "type": "module",
   "main": "index.mjs",

@@ -178,7 +178,9 @@ static napi_value MakeMove(napi_env env, napi_callback_info info) {
   move.castle = 0;
   move.enpassant = false;
   napi_value v_promo;
-  if (napi_get_named_property(env, move_obj, "promotion", &v_promo) == napi_ok) {
+  napi_valuetype promo_type;
+  if (napi_get_named_property(env, move_obj, "promotion", &v_promo) == napi_ok &&
+      napi_typeof(env, v_promo, &promo_type) == napi_ok && promo_type == napi_string) {
     size_t len;
     napi_get_value_string_utf8(env, v_promo, NULL, 0, &len);
     if (len >= 1) {
@@ -188,7 +190,9 @@ static napi_value MakeMove(napi_env env, napi_callback_info info) {
     }
   }
   napi_value v_castle;
-  if (napi_get_named_property(env, move_obj, "castle", &v_castle) == napi_ok) {
+  napi_valuetype castle_type;
+  if (napi_get_named_property(env, move_obj, "castle", &v_castle) == napi_ok &&
+      napi_typeof(env, v_castle, &castle_type) == napi_ok && castle_type == napi_string) {
     size_t len;
     napi_get_value_string_utf8(env, v_castle, NULL, 0, &len);
     if (len >= 1) {

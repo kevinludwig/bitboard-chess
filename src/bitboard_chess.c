@@ -202,6 +202,9 @@ static bool parse_san(const char* san, ParseSANResult* out) {
   }
   size_t len = strlen(san);
   if (len < 2) return false;
+  /* Strip check (+) or checkmate (#) suffix so the last two chars are the square */
+  while (len > 0 && (san[len - 1] == '+' || san[len - 1] == '#')) len--;
+  if (len < 2) return false;
   const char* p;
   if (len >= 4 && san[len - 2] == '=' && (san[len - 1] == 'N' || san[len - 1] == 'B' || san[len - 1] == 'R' || san[len - 1] == 'Q')) {
     out->promotion = (int)(unsigned char)tolower((unsigned char)san[len - 1]);

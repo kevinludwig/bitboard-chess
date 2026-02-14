@@ -87,6 +87,20 @@ function runNativeTests() {
       );
     });
 
+    it('check: 1. e4 c5 2. Nf3 d6 3. Bb5+ Nc6', function () {
+      assertSamePosition(
+        ['e4', 'c5', 'Nf3', 'd6', 'Bb5+', 'Nc6'],
+        'SAN with check (Bb5+)'
+      );
+    });
+
+    it('checkmate: 1. e4 e5 2. Bc4 Bc5 3. Qh5 Nf6 4. Qxf7#', function () {
+      assertSamePosition(
+        ['e4', 'e5', 'Bc4', 'Bc5', 'Qh5', 'Nf6', 'Qxf7#'],
+        'SAN with checkmate (Qxf7#)'
+      );
+    });
+
     describe('makeMoveSAN', function () {
       it('returns true for valid SAN', function () {
         const b = new BitboardChessNative();

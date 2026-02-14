@@ -137,6 +137,12 @@ describe('BitboardChess vs chess.js', function () {
     it('ambiguous Nbd7', function () {
       assertSamePositionSAN(['d4', 'd5', 'Nf3', 'Nf6', 'c4', 'e6', 'Nc3', 'c6', 'e3', 'Nbd7', 'Bd3', 'Bd6', 'O-O', 'O-O'], 'SAN-only Nbd7');
     });
+    it('check: 1. e4 c5 2. Nf3 d6 3. Bb5+ Nc6', function () {
+      assertSamePositionSAN(['e4', 'c5', 'Nf3', 'd6', 'Bb5+', 'Nc6'], 'SAN with check (Bb5+)');
+    });
+    it('checkmate: 1. e4 e5 2. Bc4 Bc5 3. Qh5 Nf6 4. Qxf7#', function () {
+      assertSamePositionSAN(['e4', 'e5', 'Bc4', 'Bc5', 'Qh5', 'Nf6', 'Qxf7#'], 'SAN with checkmate (Qxf7#)');
+    });
     it('makeMoveSAN returns true for valid SAN', function () {
       const b = new BitboardChess();
       expect(b.makeMoveSAN('e4')).to.equal(true);

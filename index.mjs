@@ -171,7 +171,9 @@ function filterDisamb(candidates, disambFile, disambRank) {
 
 /** Parse SAN to { piece, targetIndex, disambFile, disambRank, promotion, castle }. piece: 'N'|'B'|'R'|'Q'|'K'|null (pawn). */
 function parseSAN(san) {
-  const s = String(san).trim();
+  let s = String(san).trim();
+  // Strip check (+) or checkmate (#) suffix so the last two chars are the square
+  if (s.length > 0 && (s[s.length - 1] === '+' || s[s.length - 1] === '#')) s = s.slice(0, -1);
   if (s === 'O-O' || s === 'O-O-O') {
     return { piece: null, targetIndex: -1, disambFile: undefined, disambRank: undefined, promotion: undefined, castle: s === 'O-O' ? 'K' : 'Q' };
   }
