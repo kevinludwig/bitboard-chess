@@ -6,9 +6,16 @@
 const { expect } = require('chai');
 const Chess = require('chess.js').Chess;
 
-let BitboardChessNative;
+let BitboardChessNative, SQUARES, squareNameToIndex, squareToBitboard, squareNameToBitboard, getFileMask, getRankMask;
 try {
-  BitboardChessNative = require('../index-native.cjs').BitboardChessNative;
+  const nativeModule = require('../index-native.cjs');
+  BitboardChessNative = nativeModule.BitboardChessNative;
+  SQUARES = nativeModule.SQUARES;
+  squareNameToIndex = nativeModule.squareNameToIndex;
+  squareToBitboard = nativeModule.squareToBitboard;
+  squareNameToBitboard = nativeModule.squareNameToBitboard;
+  getFileMask = nativeModule.getFileMask;
+  getRankMask = nativeModule.getRankMask;
 } catch (_) {
   BitboardChessNative = null;
 }
@@ -305,6 +312,62 @@ function runNativeTests() {
       it('does not throw', function () {
         const b = new BitboardChessNative();
         expect(() => b.destroy()).to.not.throw();
+      });
+    });
+
+    describe('getPosition', function () {
+      it('returns shape with sideToMove, zobrist, piece bitboards, occupancies', function () {
+        const b = new BitboardChessNative();
+        try {
+          const pos = b.getPosition();
+          expect(pos.sideToMove).to.equal('w');
+          expect(pos.zobrist).to.equal(b.getZobristKey());
+          expect(pos.whiteKing).to.equal(squareToBitboard(4));
+          expect(pos.whiteOccupancy).to.equal(pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKing);
+          expect(pos.fullOccupancy).to.equal(pos.whiteOccupancy | pos.blackOccupancy);
+        } finally {
+          b.destroy();
+        }
+      });
+      it('after e4, whitePawns has e4 set', function () {
+        const b = new BitboardChessNative();
+        try {
+          b.makeMoveSAN('e4');
+          const pos = b.getPosition();
+          const e4 = squareToBitboard(28);
+          const e2 = squareToBitboard(12);
+          expect(pos.whitePawns & e4).to.equal(e4);
+          expect(pos.whitePawns & e2).to.equal(0n);
+        } finally {
+          b.destroy();
+        }
+      });
+    });
+
+    describe('square helpers', function () {
+      it('squareNameToIndex returns 0-63', function () {
+        expect(squareNameToIndex('a1')).to.equal(0);
+        expect(squareNameToIndex('e4')).to.equal(28);
+        expect(squareNameToIndex('h8')).to.equal(63);
+      });
+      it('squareToBitboard returns single-bit bigint', function () {
+        expect(squareToBitboard(0)).to.equal(1n);
+        expect(squareToBitboard(28)).to.equal(1n << 28n);
+      });
+      it('squareNameToBitboard equals squareToBitboard(squareNameToIndex(...))', function () {
+        expect(squareNameToBitboard('a5')).to.equal(squareToBitboard(squareNameToIndex('a5')));
+      });
+      it('getFileMask accepts "a"-"h" or 0-7', function () {
+        expect(getFileMask('a')).to.equal(getFileMask(0));
+        expect(getFileMask('e')).to.equal(0x1010101010101010n);
+      });
+      it('getRankMask is 1-based', function () {
+        expect(getRankMask(1)).to.equal(0xffn);
+        expect(getRankMask(4)).to.equal(0xffn << 24n);
+      });
+      it('SQUARES has a1=0 through h8=63', function () {
+        expect(SQUARES.a1).to.equal(0);
+        expect(SQUARES.h8).to.equal(63);
       });
     });
   });

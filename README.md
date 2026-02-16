@@ -65,6 +65,8 @@ board.destroy();
 
 The class name is **`BitboardChess`** (JS) or **`BitboardChessNative`** (native); the API is the same.
 
+### Instance methods
+
 - **`new BitboardChess()`** / **`new BitboardChessNative()`** — Start from initial position.
 - **`makeMove(move)`** — Apply a move object `{ from, to, promotion?, castle?, enpassant? }`. No validation.
 - **`makeMoveSAN(san)`** — Apply a move by SAN string. Returns `true`/`false`. No legality check.
@@ -72,8 +74,23 @@ The class name is **`BitboardChess`** (JS) or **`BitboardChessNative`** (native)
 - **`loadFromFEN(fen)`** — Set position from FEN. No validation.
 - **`toFEN()`** — Return current position as FEN string.
 - **`getZobristKey()`** — Deterministic Zobrist key (bigint) for the current position.
+- **`getPosition()`** — Current position as bitboards for use with other bitboard-compatible libraries. Returns `{ sideToMove, zobrist, whitePawns, blackPawns, whiteKnights, ..., blackKing, whiteOccupancy, blackOccupancy, fullOccupancy }` (all piece/occupancy values are bigint).
 - **`reset()`** — Reset to initial position.
 - **`destroy()`** — No-op in JS. On the native addon, call when done with the instance to free the native handle.
+
+### Square / file / rank helpers (exported from main and native entry)
+
+Squares use the mapping **a1=0, h8=63** (rank-major: rank 1 = 0–7, rank 2 = 8–15, …).
+
+- **`squareNameToIndex(name)`** — Square name `"a1"`–`"h8"` → index 0–63 (number).
+- **`squareToBitboard(index)`** — Index 0–63 → single-square bitboard (bigint).
+- **`squareNameToBitboard(name)`** — Same as `squareToBitboard(squareNameToIndex(name))`.
+- **`getFileMask(file)`** — Bitboard mask for a file. `file`: `"a"`–`"h"` or 0–7 (0=a, 7=h).
+- **`getRankMask(rank)`** — Bitboard mask for a rank. `rank`: **1–8** (chess rank; 1=first rank, 8=eighth rank).
+- **`SQUARES`** — Constant object `{ a1: 0, ..., h8: 63 }`.
+
+**Usage (ESM):** `import BitboardChess, { SQUARES, squareNameToIndex, squareToBitboard, squareNameToBitboard, getFileMask, getRankMask } from 'bitboard-chess'`  
+**Usage (native):** `const { BitboardChessNative, SQUARES, squareNameToIndex, ... } = require('bitboard-chess/native')`
 
 ## License
 

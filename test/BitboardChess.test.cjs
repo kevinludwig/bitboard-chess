@@ -9,9 +9,17 @@ const Chess = require('chess.js').Chess;
 
 let BitboardChess;
 
+let SQUARES, squareNameToIndex, squareToBitboard, squareNameToBitboard, getFileMask, getRankMask;
+
 before(async function () {
   const mod = await import('../index.mjs');
   BitboardChess = mod.default;
+  SQUARES = mod.SQUARES;
+  squareNameToIndex = mod.squareNameToIndex;
+  squareToBitboard = mod.squareToBitboard;
+  squareNameToBitboard = mod.squareNameToBitboard;
+  getFileMask = mod.getFileMask;
+  getRankMask = mod.getRankMask;
 });
 
 /** Convert square name (e.g. 'e4') to 0-63 index (a1=0, h8=63). */
@@ -278,6 +286,59 @@ describe('BitboardChess vs chess.js', function () {
     it('does not throw', function () {
       const b = new BitboardChess();
       expect(() => b.destroy()).to.not.throw();
+    });
+  });
+
+  describe('getPosition', function () {
+    it('returns shape with sideToMove, zobrist, piece bitboards, occupancies', function () {
+      const b = new BitboardChess();
+      const pos = b.getPosition();
+      expect(pos.sideToMove).to.equal('w');
+      expect(pos.zobrist).to.equal(b.getZobristKey());
+      expect(pos.whitePawns).to.be.a('bigint');
+      expect(pos.whiteKing).to.equal(squareToBitboard(4)); // e1
+      expect(pos.whiteOccupancy).to.equal(pos.whitePawns | pos.whiteKnights | pos.whiteBishops | pos.whiteRooks | pos.whiteQueens | pos.whiteKing);
+      expect(pos.fullOccupancy).to.equal(pos.whiteOccupancy | pos.blackOccupancy);
+    });
+    it('after e4, whitePawns has e4 set and e2 clear', function () {
+      const b = new BitboardChess();
+      b.makeMoveSAN('e4');
+      const pos = b.getPosition();
+      const e4 = squareToBitboard(28);
+      const e2 = squareToBitboard(12);
+      expect(pos.whitePawns & e4).to.equal(e4);
+      expect(pos.whitePawns & e2).to.equal(0n);
+    });
+  });
+
+  describe('square helpers', function () {
+    it('squareNameToIndex returns 0-63', function () {
+      expect(squareNameToIndex('a1')).to.equal(0);
+      expect(squareNameToIndex('e4')).to.equal(28);
+      expect(squareNameToIndex('h8')).to.equal(63);
+    });
+    it('squareToBitboard returns single-bit bigint', function () {
+      expect(squareToBitboard(0)).to.equal(1n);
+      expect(squareToBitboard(28)).to.equal(1n << 28n);
+    });
+    it('squareNameToBitboard equals squareToBitboard(squareNameToIndex(...))', function () {
+      expect(squareNameToBitboard('a5')).to.equal(squareToBitboard(squareNameToIndex('a5')));
+      expect(squareNameToBitboard('e4')).to.equal(squareToBitboard(28));
+    });
+    it('getFileMask accepts "a"-"h" or 0-7', function () {
+      expect(getFileMask('a')).to.equal(getFileMask(0));
+      expect(getFileMask('h')).to.equal(getFileMask(7));
+      expect(getFileMask('e')).to.equal(0x1010101010101010n);
+    });
+    it('getRankMask is 1-based (1=first rank)', function () {
+      expect(getRankMask(1)).to.equal(0xffn);
+      expect(getRankMask(4)).to.equal(0xffn << 24n);
+      expect(getRankMask(8)).to.equal(0xffn << 56n);
+    });
+    it('SQUARES has a1=0 through h8=63', function () {
+      expect(SQUARES.a1).to.equal(0);
+      expect(SQUARES.e4).to.equal(28);
+      expect(SQUARES.h8).to.equal(63);
     });
   });
 });

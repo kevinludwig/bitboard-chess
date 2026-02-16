@@ -15,6 +15,45 @@ try {
   }
 }
 
+// Square/file/rank helpers (same mapping as index.mjs for bitboard compatibility)
+function squareNameToIndex(name) {
+  const file = name.charCodeAt(0) - 97;
+  const rank = parseInt(name[1], 10) - 1;
+  return rank * 8 + file;
+}
+
+function squareToBitboard(index) {
+  return 1n << BigInt(index);
+}
+
+function squareNameToBitboard(name) {
+  return squareToBitboard(squareNameToIndex(name));
+}
+
+/** file: "a"-"h" or 0-7 (0=a, 7=h). */
+function getFileMask(file) {
+  const f = typeof file === 'string' ? file.charCodeAt(0) - 97 : file;
+  return (0x0101010101010101n << BigInt(f)) & 0xffffffffffffffffn;
+}
+
+/** rank: 1-8 (chess rank, 1=first rank, 8=eighth rank). */
+function getRankMask(rank) {
+  return 0xffn << BigInt((rank - 1) * 8);
+}
+
+const SQUARES = Object.freeze(
+  (() => {
+    const out = {};
+    for (let r = 1; r <= 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const name = String.fromCharCode(97 + f) + r;
+        out[name] = (r - 1) * 8 + f;
+      }
+    }
+    return out;
+  })()
+);
+
 class BitboardChessNative {
   constructor() {
     this._handle = native.create();
@@ -40,6 +79,10 @@ class BitboardChessNative {
     return native.getZobristKey(this._handle);
   }
 
+  getPosition() {
+    return native.getPosition(this._handle);
+  }
+
   toFEN() {
     return native.toFEN(this._handle);
   }
@@ -61,4 +104,13 @@ class BitboardChessNative {
   }
 }
 
-module.exports = { BitboardChessNative, native };
+module.exports = {
+  BitboardChessNative,
+  native,
+  SQUARES,
+  squareNameToIndex,
+  squareToBitboard,
+  squareNameToBitboard,
+  getFileMask,
+  getRankMask,
+};

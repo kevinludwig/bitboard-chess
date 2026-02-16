@@ -211,6 +211,55 @@ static napi_value MakeMove(napi_env env, napi_callback_info info) {
   return NULL;
 }
 
+static napi_value u64_to_bigint(napi_env env, uint64_t val) {
+  uint64_t words[1] = { val };
+  napi_value result;
+  if (napi_create_bigint_words(env, 0, 1, words, &result) != napi_ok) return NULL;
+  return result;
+}
+
+static napi_value GetPosition(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value argv[1];
+  napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+  if (argc < 1) return NULL;
+  Board* b;
+  napi_get_value_external(env, argv[0], (void**)&b);
+
+  uint64_t lo = board_get_zobrist_key_lo(b);
+  uint64_t hi = board_get_zobrist_key_hi(b);
+  uint64_t zobrist = (hi << 32) | lo;
+
+  u64 wOcc = b->pawns[0] | b->knights[0] | b->bishops[0] | b->rooks[0] | b->queens[0] | b->kings[0];
+  u64 bOcc = b->pawns[1] | b->knights[1] | b->bishops[1] | b->rooks[1] | b->queens[1] | b->kings[1];
+
+  napi_value obj;
+  napi_create_object(env, &obj);
+
+  napi_value v_side;
+  napi_create_string_utf8(env, b->sideToMove == WHITE ? "w" : "b", 1, &v_side);
+  napi_set_named_property(env, obj, "sideToMove", v_side);
+
+  napi_set_named_property(env, obj, "zobrist", u64_to_bigint(env, zobrist));
+  napi_set_named_property(env, obj, "whitePawns", u64_to_bigint(env, b->pawns[0]));
+  napi_set_named_property(env, obj, "blackPawns", u64_to_bigint(env, b->pawns[1]));
+  napi_set_named_property(env, obj, "whiteKnights", u64_to_bigint(env, b->knights[0]));
+  napi_set_named_property(env, obj, "whiteBishops", u64_to_bigint(env, b->bishops[0]));
+  napi_set_named_property(env, obj, "whiteRooks", u64_to_bigint(env, b->rooks[0]));
+  napi_set_named_property(env, obj, "whiteQueens", u64_to_bigint(env, b->queens[0]));
+  napi_set_named_property(env, obj, "whiteKing", u64_to_bigint(env, b->kings[0]));
+  napi_set_named_property(env, obj, "blackKnights", u64_to_bigint(env, b->knights[1]));
+  napi_set_named_property(env, obj, "blackBishops", u64_to_bigint(env, b->bishops[1]));
+  napi_set_named_property(env, obj, "blackRooks", u64_to_bigint(env, b->rooks[1]));
+  napi_set_named_property(env, obj, "blackQueens", u64_to_bigint(env, b->queens[1]));
+  napi_set_named_property(env, obj, "blackKing", u64_to_bigint(env, b->kings[1]));
+  napi_set_named_property(env, obj, "whiteOccupancy", u64_to_bigint(env, wOcc));
+  napi_set_named_property(env, obj, "blackOccupancy", u64_to_bigint(env, bOcc));
+  napi_set_named_property(env, obj, "fullOccupancy", u64_to_bigint(env, wOcc | bOcc));
+
+  return obj;
+}
+
 #define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
 
 static napi_value Init(napi_env env, napi_value exports) {
@@ -221,6 +270,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     DECLARE_NAPI_METHOD("makeMove", MakeMove),
     DECLARE_NAPI_METHOD("resolveSAN", ResolveSAN),
     DECLARE_NAPI_METHOD("getZobristKey", GetZobristKey),
+    DECLARE_NAPI_METHOD("getPosition", GetPosition),
     DECLARE_NAPI_METHOD("toFEN", ToFEN),
     DECLARE_NAPI_METHOD("loadFromFEN", LoadFromFEN),
     DECLARE_NAPI_METHOD("reset", Reset),

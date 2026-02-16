@@ -236,6 +236,58 @@ const ZOBRIST_SIDE = { value: 0n };
 })();
 
 // ============================================================
+// Public square / file / rank helpers (bitboard-compatible API)
+// ============================================================
+
+/** Square names "a1"-"h8" to index 0-63 (a1=0, h8=63). */
+function squareNameToIndex(name) {
+  const file = name.charCodeAt(0) - 97;
+  const rank = parseInt(name[1], 10) - 1;
+  return rank * 8 + file;
+}
+
+/** Index 0-63 to single-square bitboard (1n << index). */
+function squareToBitboard(index) {
+  return 1n << BigInt(index);
+}
+
+/** Square name "a1"-"h8" to single-square bitboard. */
+function squareNameToBitboard(name) {
+  return squareToBitboard(squareNameToIndex(name));
+}
+
+/**
+ * Bitboard mask for a file. file: "a"-"h" or 0-7 (0=a, 7=h).
+ * @param {string|number} file - File letter or 0-based file index
+ */
+function getFileMask(file) {
+  const f = typeof file === 'string' ? file.charCodeAt(0) - 97 : file;
+  return (0x0101010101010101n << BigInt(f)) & 0xffffffffffffffffn;
+}
+
+/**
+ * Bitboard mask for a rank. rank: 1-8 (chess rank, 1=first rank, 8=eighth rank).
+ * @param {number} rank - 1-based chess rank
+ */
+function getRankMask(rank) {
+  return 0xffn << BigInt((rank - 1) * 8);
+}
+
+/** Square name to index: { a1: 0, ..., h8: 63 }. */
+const SQUARES = Object.freeze(
+  (() => {
+    const out = {};
+    for (let r = 1; r <= 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const name = String.fromCharCode(97 + f) + r;
+        out[name] = (r - 1) * 8 + f;
+      }
+    }
+    return out;
+  })()
+);
+
+// ============================================================
 // Engine Class
 // ============================================================
 
@@ -670,8 +722,37 @@ class BitboardChess {
     return fen;
   }
 
+  /**
+   * Current position as bitboards for use with other bitboard-compatible libraries.
+   * @returns {{ sideToMove: "w"|"b", zobrist: bigint, whitePawns: bigint, blackPawns: bigint, whiteKnights: bigint, whiteBishops: bigint, whiteRooks: bigint, whiteQueens: bigint, whiteKing: bigint, blackKnights: bigint, blackBishops: bigint, blackRooks: bigint, blackQueens: bigint, blackKing: bigint, whiteOccupancy: bigint, blackOccupancy: bigint, fullOccupancy: bigint }}
+   */
+  getPosition() {
+    const wOcc = this.pawns[WHITE] | this.knights[WHITE] | this.bishops[WHITE] | this.rooks[WHITE] | this.queens[WHITE] | this.kings[WHITE];
+    const bOcc = this.pawns[BLACK] | this.knights[BLACK] | this.bishops[BLACK] | this.rooks[BLACK] | this.queens[BLACK] | this.kings[BLACK];
+    return {
+      sideToMove: this.sideToMove === WHITE ? 'w' : 'b',
+      zobrist: this.getZobristKey(),
+      whitePawns: this.pawns[WHITE],
+      blackPawns: this.pawns[BLACK],
+      whiteKnights: this.knights[WHITE],
+      whiteBishops: this.bishops[WHITE],
+      whiteRooks: this.rooks[WHITE],
+      whiteQueens: this.queens[WHITE],
+      whiteKing: this.kings[WHITE],
+      blackKnights: this.knights[BLACK],
+      blackBishops: this.bishops[BLACK],
+      blackRooks: this.rooks[BLACK],
+      blackQueens: this.queens[BLACK],
+      blackKing: this.kings[BLACK],
+      whiteOccupancy: wOcc,
+      blackOccupancy: bOcc,
+      fullOccupancy: wOcc | bOcc,
+    };
+  }
+
   /** No-op on JS engine; present for API parity with native (which must free the handle). */
   destroy() {}
 }
 
 export default BitboardChess;
+export { SQUARES, squareNameToIndex, squareToBitboard, squareNameToBitboard, getFileMask, getRankMask };
