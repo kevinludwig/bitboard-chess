@@ -4,6 +4,7 @@
  * BitboardChess does not validate moves; we only verify correct state updates.
  * Covers: base, castling short/long, en passant, promotion, ambiguous (e.g. Nbd7).
  */
+const { describe, it, before } = require('node:test');
 const { expect } = require('chai');
 const Chess = require('chess.js').Chess;
 

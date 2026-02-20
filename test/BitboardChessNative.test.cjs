@@ -3,6 +3,7 @@
  * Equivalent to BitboardChess.test.cjs but for the native implementation.
  * Skipped entirely if the native addon is not built (npm run build).
  */
+const { describe, it, before, afterEach } = require('node:test');
 const { expect } = require('chai');
 const Chess = require('chess.js').Chess;
 
